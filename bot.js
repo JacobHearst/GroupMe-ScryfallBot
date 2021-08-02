@@ -1,27 +1,69 @@
 var HTTPS = require('https');
-var cool = require('cool-ascii-faces');
 
 var botID = process.env.BOT_ID;
 
 function respond() {
   var request = JSON.parse(this.req.chunks[0]),
-      botRegex = /^\/cool guy$/;
+      botRegex = /\[\[(.+)\]\]/;
 
   if(request.text && botRegex.test(request.text)) {
     this.res.writeHead(200);
-    postMessage();
+    getCard(response.text.match(botRegex)[0], (cardData) => {
+        postMessage(makeMessage(cardData))
+    })
     this.res.end();
   } else {
-    console.log("don't care");
+    console.log("No card syntax found");
     this.res.writeHead(200);
     this.res.end();
   }
 }
 
-function postMessage() {
-  var botResponse, options, body, botReq;
+function getCard(cardName, callback) {
+    let encodedName = encodeURI(cardName.replace(" ", "+"))
 
-  botResponse = cool();
+    const options = {
+        hostname: 'api.scryfall.com',
+        path: `cards/name?fuzzy=${encodedName}`,
+        method: 'GET'
+    }
+
+    HTTPS.get(options, (response) => {
+        let data = '';
+
+        // A chunk of data has been received.
+        response.on('data', (chunk) => {
+            data += chunk
+        })
+
+        response.on('end', () => {
+            callback(JSON.parse(data))
+        })
+    })
+    .on("error", (err) => {
+        console.error(`Error sending message: ${JSON.stringify(err)}`)
+    })
+    .on("timeout", (err) => {
+        console.error(`Timed out sending message: ${JSON.stringify(err)}`)
+    })
+}
+
+function makeMessage(cardData) {
+    let primaryLink = cardData.scryfall_uri
+
+    if (cardData.image_uris) {
+        const uris = cardData.image_uris
+        const newLink = uris.normal || uris.large || uris.small
+        if (newLink) {
+            primaryLink = newLink
+        }
+    }
+
+    return `${cardData.name}: ${primaryLink}\nView on Scryfall:${cardData.scryfall_uri}`
+}
+
+function postMessage(message) {
+  var options, body, botReq;
 
   options = {
     hostname: 'api.groupme.com',
@@ -31,10 +73,10 @@ function postMessage() {
 
   body = {
     "bot_id" : botID,
-    "text" : botResponse
+    "text" : message
   };
 
-  console.log('sending ' + botResponse + ' to ' + botID);
+  console.log('sending ' + message + ' to ' + botID);
 
   botReq = HTTPS.request(options, function(res) {
       if(res.statusCode == 202) {

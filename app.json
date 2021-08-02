@@ -1,7 +1,7 @@
 {
-  "name": "Cool guy bot",
-  "description": "Basic Groupme Bot written in Node",
-  "repository": "https://github.com/petemcgrath/cool-guy-bot",
-  "logo": "http://www.tailgate365.com/wp-content/uploads/2011/06/tom-hanks-906.jpg",
+  "name": "ScryBot",
+  "description": "A bot to add Scryfall content to a chat",
+  "repository": "https://github.com/JacobHearst/GroupMe-ScryBot",
+  "logo": "https://assets.scryfall.com/og-image.jpg?d587f4c2294550eafda112145ca6618ce15864cbaeee2e44eea1f9d975e3f400",
   "keywords": []
 }
