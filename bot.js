@@ -52,8 +52,20 @@ function getCard(cardName, callback) {
 
 function postCardDetails(cardData) {
     const image_uris = cardData.image_uris
-    if (image_uris && (image_uris.normal || image_uris.large || image_uris.small)) {
-        uploadImageToGroupMe(image_uris.normal || image_uris.large || image_uris.small, (response) => {
+    let image_uri = undefined
+
+    if (image_uris && !!selectImageUri(image_uris)) {
+        image_uri = selectImageUri(image_uris)
+    } else if (cardData.card_faces) {
+        image_uri = getFrontFaceArtUri(cardData)
+    } else {
+        const text = `No images for card: ${cardData.name}` 
+        console.warn(text)
+        postMessage({ text })
+    }
+
+    if (!!image_uri) {
+        uploadImageToGroupMe(image_uri, (response) => {
             body = {
                 text: `Scryfall: ${cardData.scryfall_uri}`,
                 attachments: [
@@ -66,11 +78,22 @@ function postCardDetails(cardData) {
 
             postMessage(body)
         })
-    } else {
-        const text = `No images for card: ${cardData.name}` 
-        console.warn(text)
-        postMessage({ text })
     }
+}
+
+function getFrontFaceArtUri(cardData) {   
+    console.log(!!cardData.card_faces[0].image_uris) 
+    const image_uris = cardData.card_faces[0].image_uris
+    if (!image_uris) {
+        console.error(`Face of '${cardData.name}' doesn't have an image associated with it`)
+        return
+    }
+
+    return selectImageUri(image_uris)
+}
+
+function selectImageUri(image_uris) {
+    return image_uris.normal || image_uris.large || image_uris.small
 }
 
 function uploadImageToGroupMe(uri, callback) {
