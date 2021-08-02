@@ -7,7 +7,7 @@
     "start": "node index.js"
   },
   "dependencies": {
-    "director": ""
+    "director": "1.2.8"
   },
   "engines": {
     "node": "12.18.x"
