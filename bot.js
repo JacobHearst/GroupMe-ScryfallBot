@@ -6,12 +6,15 @@ var accessToken = process.env.GM_TOKEN
 
 function respond() {
     const request = JSON.parse(this.req.chunks[0])
-    const botRegex = /\[\[(.+)\]\]/;
-    const match = request.text.match(botRegex)
+    const botRegex = /\[\[([^\[\]]+)\]\]/g
+    const matches = request.text.match(botRegex)
 
-    if (request.text && match) {
+    if (request.text && matches) {
         this.res.writeHead(200);
-        getCard(match[1], postCardDetails)
+        matches.forEach((match) => {
+            const cleanMatch = match.replace("[[", "").replace("]]", "")
+            getCard(cleanMatch, postCardDetails)
+        })
         this.res.end();
     } else {
         console.log("No card syntax found");
