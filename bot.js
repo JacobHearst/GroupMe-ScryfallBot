@@ -13,7 +13,7 @@ function respond() {
         this.res.writeHead(200);
         matches.forEach((match) => {
             const cleanMatch = match.replace("[[", "").replace("]]", "")
-            getCard(cleanMatch, postCardDetails)
+            getCard(cleanMatch, (cardData) => postCardDetails(cardData, cleanMatch))
         })
         this.res.end();
     } else {
@@ -53,14 +53,14 @@ function getCard(cardName, callback) {
         })
 }
 
-function postCardDetails(cardData) {
+function postCardDetails(cardData, faceName) {
     const image_uris = cardData.image_uris
     let image_uri = undefined
 
     if (image_uris && !!selectImageUri(image_uris)) {
         image_uri = selectImageUri(image_uris)
     } else if (cardData.card_faces) {
-        image_uri = getFrontFaceArtUri(cardData)
+        image_uri = getMultifaceCardArt(cardData, faceName)
     } else {
         const text = `No images for card: ${cardData.name}` 
         console.warn(text)
@@ -84,9 +84,17 @@ function postCardDetails(cardData) {
     }
 }
 
-function getFrontFaceArtUri(cardData) {   
-    console.log(!!cardData.card_faces[0].image_uris) 
-    const image_uris = cardData.card_faces[0].image_uris
+function getMultifaceCardArt(cardData, faceName) {
+    // Try to get the art for the specified face
+    let face = cardData.card_faces.find((face) => face.name.toLowerCase().includes(faceName.toLowerCase()))
+    if (!face) {
+        console.warn(`Couldn't find card face with name: '${faceName}'. Showing front face`)
+        image_uris = cardData.card_faces[0].image_uris
+    } else {
+        console.log(`Found card face with name '${face.name}'`)
+        image_uris = face.image_uris
+    }
+
     if (!image_uris) {
         console.error(`Face of '${cardData.name}' doesn't have an image associated with it`)
         return
